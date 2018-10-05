@@ -19,7 +19,8 @@ class KMeans:
         self.z = np.zeros(np.size(self.x_train))
         self.vec_dim = np.size(x_train[0])
         self.total_size = int(np.size(x_train) / self.vec_dim)
-    
+        
+        
     
     def DistMeasure(self, x1, x2):
         
@@ -46,9 +47,12 @@ class KMeans:
             self.mean_vec[i] = kth_mean
         
         iter_num = 0
-        while iter_num < iterations:
+        cost_func_i = 1000000
+        cost_func_f = 0
+        while cost_func_i - cost_func_f > precision:
             N_z = np.zeros(self.k)
             new_mean_vec = np.zeros(shape = (self.k, self.vec_dim))
+            cost_func_i = cost_func_f
             
             for i in range(0, self.total_size):
                 cluster_num = self.MinDistCluster(self.x_train[i], self.mean_vec)
@@ -56,19 +60,29 @@ class KMeans:
                 self.z[i] = cluster_num
                 N_z[cluster_num] = N_z[cluster_num] + 1
                 
+            cost_term1_f = 0
+            cost_term2_f = 0
+                
             for i in range(0, self.k):
                 if (N_z[i] == 0):
                     new_mean_vec[i] = new_mean_vec[i]
                 else:
                     new_mean_vec[i] = (1 / N_z[i]) * new_mean_vec[i]
+                cost_term1_f = cost_term1_f + np.dot(new_mean_vec[i], new_mean_vec[i]) * N_z[i]
+
+            for i in range(0, self.total_size):
+                cost_term2_f = cost_term2_f + np.dot(self.x_train[i], new_mean_vec[int(self.z[i])])
+
+            cost_func_f = cost_term1_f - 2 * cost_term2_f
             
             self.mean_vec = new_mean_vec
             iter_num = iter_num + 1
-            print("iternation no: ", iter_num)
+            print("iternation no: %d diff: %d" % (iter_num, cost_func_i - cost_func_f))
             
         #print(N_z[0], N_z[1], N_z[2])
         print(N_z)
         print(self.mean_vec)
+        print(abs(cost_func_i - cost_func_f))
             
             
     def ClusterPredict(self, X):
