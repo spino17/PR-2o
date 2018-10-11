@@ -1,6 +1,6 @@
 # PR-2O
 CS-669 Pattern Recognition Assignment-2:
-The following discussion revolves around the modelling of data classifier in accordance with the bayesian decision theory. Unlike previous assignment here we do not assume class conditional probablity to be normal but instead we assume that the distribution is in the form of function that can be approximated as the linear combination\footnote{refer to the appendix for more discussion on functional vector space} of many gaussians(precisly k-gaussians).
+The following discussion revolves around the modelling of data classifier in accordance with the bayesian decision theory. Unlike previous assignment here we do not assume class conditional probablity to be normal but instead we assume that the distribution is in the form of function that can be approximated as the linear combination of many gaussians(precisly k-gaussians).
 
 The dataset considered here are:
 # Dataset-1:
