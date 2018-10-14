@@ -100,5 +100,46 @@ class ImageHandler:
      
         return patchvec
     
-
+    def Intensity(self):
+        height, width = self.img.shape[:2]
+        pixel_arr = []
+        for row in range(0, height):
+            pixel_row = []
+            for col in range(0, width):
+                pixel_intensity = 0.21 * self.img[row][col][0] + 0.72 * self.img[row][col][1] + 0.07 * self.img[row][col][2]
+                pixel_row.append(pixel_intensity)
+                
+            pixel_arr.append(pixel_row)
         
+        return np.array(pixel_arr)
+                
+                
+                
+    def ToShiftedPatches(self):
+        height, width = self.img.shape[:2]
+        num_patches = width - 6
+        patches = []
+        pixel_arr = self.Intensity()
+        mean = np.mean(pixel_arr[0:7, 0:7].reshape((1, 49)))
+        var = np.var(pixel_arr[0:7, 0:7].reshape((1, 49)))
+        
+        for row in range(0, height - 6):
+            if (row != 0):
+                mean = patches[row * num_patches - num_patches][0]
+                var = patches[row * num_patches - num_patches][1]
+                new_mean = (mean * 49 - sum(pixel_arr[row-1, :7]) + sum(pixel_arr[row+6, :7])) / 49
+                new_var = (((var + mean * mean) * 49 - np.dot(pixel_arr[row-1, :7], pixel_arr[row-1, :7]) + np.dot(pixel_arr[row+6, :7], pixel_arr[row+6, :7])) / 49) - new_mean * new_mean
+            else:
+                new_mean = mean
+                new_var = var
+                
+            patches.append([new_mean, new_var])
+            
+            for i in range(1, width - 6):
+                mean = patches[row * num_patches + i-1][0]
+                var = patches[row * num_patches + i-1][1]
+                new_mean = (mean * 49 - sum(pixel_arr[:7, i-1]) + sum(pixel_arr[:7, i+6])) / 49
+                new_var = ((var + mean * mean) * 49 - np.dot(pixel_arr[:7, i-1], pixel_arr[:7, i-1]) + np.dot(pixel_arr[:7, i+6], pixel_arr[:7, i+6])) / 49 - new_mean * new_mean
+                patches.append([new_mean, new_var])
+        
+        return patches
