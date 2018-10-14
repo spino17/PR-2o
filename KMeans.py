@@ -102,7 +102,7 @@ class KMeans:
     def MixtureCoeff(self):
         
         total_num = np.sum(self.N_z)
-        return (1 / total_num) * self.N_z
+        return self.N_z / total_num
         
     # predict the cluster of data points after training has occured
     def ClusterPredict(self, X):
