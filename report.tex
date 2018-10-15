@@ -1,0 +1,110 @@
+	\documentclass[a4paper]{article}
+\newcommand{\dd}[1]{\mathrm{d}#1}
+%% Language and font encodings
+\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage[T1]{fontenc}
+
+%% Sets page size and margins
+\usepackage[a4paper,top=3cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}
+
+%% Useful packages
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage[colorinlistoftodos]{todonotes}
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+\usepackage{braket}
+\usepackage{amssymb}
+\usepackage{subcaption}
+\usepackage[section]{placeins}
+\usepackage{float}
+\usepackage{color}
+\restylefloat{table}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+\DeclareMathOperator*{\argmin}{argmin}
+
+\title{Gaussian Mixture Models and K-means Clustering}
+\author{Shreyas Bapat, Bhavya Bhatt, GaganDeep Tomar}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+The following discussion revolves around the modelling of data classifier in accordance with the bayesian decision theory. Unlike previous assignment here we do not assume class conditional probablity to be normal but instead we assume that the distribution is in the form of function that can be approximated as the linear combination\footnote{refer to the appendix for more discussion on functional vector space} of many gaussians(precisly k-gaussians).
+\end{abstract}
+
+\section{Introduction}
+
+The Bayesian Decision Theory is a probablistic theory for classifying the data points on the basics of pre-known prior and class conditional probabilities(which in real scenario is not known in any closed form expression). We give below the basics of gaussian mixture models which we would use to estimate our class conditional probability and thereby applying bayesian decision rule to estimate the class of the data points. We also introduce the K-means clustering method which we would use to get the initial parameters for the GMM model.
+\subsection{Gaussian Mixture Model}
+In previous assignment we assumed that the class conditional probability is of the gaussian form and we there after derived the decision boundary. But in real scenario our data statistically may not be coming from such a well behaved closed form probability distribution(which here we considered normal distribution). So to make our probability distribution more general we write our class conditional probablity density as linear combination of linearly independent function vectors in infinite dimensional functional space as follows\footnote{complete discussion is given in appendix}
+\begin{equation}
+p(\bar{x}) = \sum_{k=1}^{K}\Pi_{k}G_{k}
+\end{equation}where $K$ is number of clusters which we are using to approximate our true probability distribution\footnote{In principle we should take infinite number of such gaussians to exactly extract the true probability distribution from which data points are coming}. Now here $G_{k}$ represents gaussian distribution function with parameters as $\left(\mu_{k}, \sigma_{k}\right)$ and $\Pi_{k}$ represents the coefficients of $G_{k}$. Now to fit the above probability distribution such that it optimize the cost function we estimate the parameter vector $\bar{\theta}=\left[\Pi_{k}, \mu_{k}, \sigma_{k}\right] \forall k$ which would do this job.
+\subsection{Maximum Loglikelihood Estimate of GMM and Clustering}
+We know that to estimate the parameters we optimize the total loglikelihood which is as follows
+\begin{equation}
+p(D|\bar{\theta})=\prod_{n=1}^{N}p(\bar{x_{n}}|\bar{\theta})p(\bar{\theta})
+\end{equation}Now we optimize the log likelihood function $l(\bar{\theta})$ to estimate the unknown parameter vector $\bar{\theta}$
+\[
+\begin{split}
+l(\bar{\theta})&=\sum_{n=1}^{N}\ln(p(\bar{x_{n}}|\bar{\theta})p(\bar{\theta})) \\
+               &=\sum_{n=1}^{N}\ln(\sum_{k=1}^{K}\Pi_{k}G_{k}(\bar{x_{n}}))
+\end{split}
+\]But Now we cannot apply our conventional approach as it would be too complex to evaluate, the reason behind is that we don't know how different data points are distributed under different gaussians in the summation. If we would know that then we can separately apply optimization for each gaussian considering only those data points which are coming from that gaussain itself. This problem of dividing the data points based on some distance measure is what we call clustering of the data set into $K$ clusters. We mention below the most common algorithm used for clustering, K-means clustering.
+\subsection{K-means Clustering}
+The cost function considered here is measure of distortion which is defined as follows
+\begin{equation}
+J=\sum_{n=1}^{N}\sum_{k=1}^{K}z_{nk}\left|\bar{x_{n}}-\bar{\mu_{k}}\right|^2
+\end{equation}where $z_{nk}$ is $kth$ component of one-hot encoded vector $\bar{z_{n}}=\left[0\dots1\dots0\right]$ where one is at the position equal to the number of cluster to which $\bar{x_{n}}$ data points belong to. Now during optimization we have now an additional latent information variable $\bar{z}$ which is also a parameter to be optimized. But how we define that a particular data point belong to some particular cluster? the following is the criteria to assign the cluster number and thus vector $\bar{z}$ to a data point
+\[
+cluster\ to\ which\ x_{n}\ belongs\ to = \argmin_{k}\left|\bar{x_{n}}-\mu_{k}\right|
+\]Now this is somewhat similar to chicken-egg problem because of the interdependence of $\bar{z}$ and $\mu_{k}$. So to deal with this kind of optimization\footnote{this type of optimization problems are called ill-posed optimization problem} we employ EM method of optimization. The algorithm is given below
+\begin{algorithm}
+\caption{Euclid’s algorithm}\label{alg:euclid}
+\begin{algorithmic}[1]
+\Procedure{Euclid}{$a,b$}\Comment{The g.c.d. of a and b}
+\State $r\gets a\bmod b$
+\While{$r\not=0$}\Comment{We have the answer if r is 0}
+\State $a\gets b$
+\State $b\gets r$
+\State $r\gets a\bmod b$
+\EndWhile\label{euclidendwhile}
+\State \textbf{return} $b$\Comment{The gcd is b}
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+\section{Coutour Curves and Covariance Matrix}\label{appendix}
+In this section\footnote{for a complete discussion refer to the appendix} we discuss the relation between the shape of the cross section produced by slicing the bivariate gaussian distribution with a hyperplane parallel to the 2D-feature plane and covariance matrix. The bivariate gaussian distribution is a follows
+\begin{equation}
+P(\bar{x}|C_{i}) = \frac{1}{\sqrt{det(2\pi\mathbf{\Sigma_{i}})}}exp\{\frac{-1}{2}(\bar{x}-\bar{\mu_{i}})^{\intercal}\mathbf{\Sigma_{i}}^{-1}(\bar{x}-\bar{\mu_{i}})\}
+\end{equation}with $mu_{i}$ be a $2\times1$ mean column vector and $\Sigma_{i}$ be $2\times2$ covariance matrix. So we assume the covariance matrix in its expanded form as
+\[
+\mathbf{\Sigma} = \left[ {\begin{array}{cc}
+\Sigma_{11} & \Sigma_{12} \\
+\Sigma_{12} & \Sigma_{22} \\
+\end{array}} \right]
+\]
+where diagonal terms are variance of the features and off-diagonal terms are covariance bewteen feature-1 and feature-2. The above matrix is symmetric precisly due to the fact that $cov(x_{i}, x_{j})=cov(x_{j}, x_{i})$. Now we set the above distribution function to some constant $k$ and find the resultant curve projected on the feature space which is called constant contour curve.
+\[
+\frac{1}{\sqrt{det(2\pi\mathbf{\Sigma_{i}})}}exp\{\frac{-1}{2}(\bar{x}-\bar{\mu_{i}})^{\intercal}\mathbf{\Sigma_{i}}^{-1}(\bar{x}-\bar{\mu_{i}})\} = k
+\]after some manupilation and taking log both sides we get
+\[
+(\bar{x}-\bar{\mu})^{\intercal}\mathbf{\Sigma}^{-1}(\bar{x}-\bar{\mu})=-2\ln(\sqrt{2\pi\left|\mathbf{\Sigma}\right|}k)
+\]where we have dropped the index $i$ for simplicity and the whole analysis can be done without the loss of generality. Now writing the matrix in full and evaluating the required operation on the column vector we get finally
+\begin{equation}\label{cov}
+\Sigma_{22}X_{1}^{2} + \Sigma_{11}X_{2}^{2} - 2\Sigma_{12}X_{1}X_{2} + 2\ln(\sqrt{2\pi\left|\mathbf{\Sigma}\right|}k)=0
+\end{equation}where $\bar{x}=\left[x_{1}x_{2}\right]^{\intercal}$, $\bar{\mu}=\left[\mu_{1} \mu_{2}\right]^{\intercal}$, $X_{1}=x_{1}-\mu_{1}$ and $X_{2}=x_{2}-\mu_{2}$. This equation is in the form of general equation for conic section
+\begin{equation}
+ax^{2}+by^{2}+cxy+d=0
+\end{equation}Now in our case the coefficients $a$ and $b$ are $\Sigma_{22}$ and $\Sigma_{11}$ respectively. The above equation thus represents an ellipse in our case as variances are always positive values. Now from the elementary analysis of conics we know that the coefficient of $xy$ represent the extend to which the ellipse is titled w.r.t to the axis. Also the coefficients of $x^{2}$ and $y^{2}$ represents the length of major and minor axis respectively. Now we consider $\Sigma_{12}=0$ (covariance matrix is diagonal) then the we recover the familiar equation of ellipse with major and minor axis parallel to the x-y axis. The equation is
+\begin{equation}
+\frac{X_{1}^{2}}{\left(\frac{-2\ln(\sqrt{2\pi\left|\mathbf{\Sigma}\right|}k)}{\Sigma_{22}}\right)}+\frac{X_{2}^{2}}{\left(\frac{-2\ln(\sqrt{2\pi\left|\mathbf{\Sigma}\right|}k)}{\Sigma_{11}}\right)}=1
+\end{equation}which is of the form
+\[
+\frac{x^{2}}{A^{2}}+\frac{y^{2}}{B^{2}}=1
+\]the above is the equation of countour curve projected in the feature space. Now we consider following three cases
+\bibliographystyle{alpha}
+\bibliography{sample}
+\end{document}
